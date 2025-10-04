@@ -3846,7 +3846,7 @@ begin
   else if SysUtils.CompareText(TargetCPU,'ia64')=0 then
     Result:=Result+'ia64'
   else if SysUtils.CompareText(TargetCPU,'aarch64')=0 then
-    Result:=Result+'aarch64'
+    Result:=Result+'a64'
   else if SysUtils.CompareText(TargetCPU,'riscv32')=0 then
     Result:=Result+'riscv32'
   else if SysUtils.CompareText(TargetCPU,'riscv64')=0 then

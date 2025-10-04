@@ -134,7 +134,7 @@ type
   FT_Int = longint;
   FT_UInt = longword;
   FT_Int32   = longint;
-  {$if defined(cpu64) and not(defined(win64) and defined(cpux86_64))}
+  {$if defined(cpu64) and not(defined(win64) and (defined(cpux86_64) OR defined(cpuaarch64))}
   FT_Long = int64;
   FT_ULong = qword;
   FT_Pos = int64;
