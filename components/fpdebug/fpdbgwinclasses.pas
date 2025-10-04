@@ -832,6 +832,7 @@ var
   end;
   Context: PContext;
 begin
+  {$ifndef cpuaarch64}
   // Interrupting is implemented by suspending the thread and set DB0 to the
   // (to be) executed EIP. When the thread is resumed, it will generate a break
   // Single stepping doesn't work in all cases.
@@ -864,6 +865,7 @@ begin
   finally
     ResumeTHread(FInfo.hThread);
   end;
+  {$endif cpuaarch64}
 end;
 
 { ------------------------------------------------------------------
@@ -1441,6 +1443,8 @@ function TDbgWinProcess.AnalyseDebugEvent(AThread: TDbgThread): TFPDEvent;
     if TDbgWinThread(AThread).FCurrentContext = nil then Exit;
 
 {$PUSH}{$R-}
+
+    {$ifndef cpuaarch64}
     {$ifdef cpui386}
     with TDbgWinThread(AThread).FCurrentContext^.def do DebugLn(Format('DS: 0x%x, ES: 0x%x, FS: 0x%x, GS: 0x%x', [SegDs, SegEs, SegFs, SegGs]));
     with TDbgWinThread(AThread).FCurrentContext^.def do DebugLn(Format('EAX: 0x%x, EBX: 0x%x, ECX: 0x%x, EDX: 0x%x, EDI: 0x%x, ESI: 0x%x', [Eax, Ebx, Ecx, Edx, Edi, Esi]));
@@ -1510,6 +1514,7 @@ function TDbgWinProcess.AnalyseDebugEvent(AThread: TDbgThread): TFPDEvent;
       end;
       DebugLn(']');
     end;
+    {$endif cpuaarch64}
     DebugLn('---');
   {$POP}
   end;
@@ -1826,6 +1831,7 @@ begin
 
   DisableFloatExceptions;
   try
+  {$ifndef cpuaarch64}
 
   {$ifdef cpui386}
   with FCurrentContext^.def do
@@ -2065,6 +2071,7 @@ begin
       Freemem(Buffer);
     end;
   end;
+  {$endif cpuaarch64}
 
   finally
     FRegisterValueListValid:=true;
@@ -2075,6 +2082,7 @@ end;
 function TDbgWinThread.GetFpThreadContext(var AStorage: TFpContext; out
   ACtxPtr: PFpContext; ACtxFlags: TFpWinCtxFlags): Boolean;
 begin
+  {$ifndef cpuaarch64}
   ACtxPtr := AlignPtr(@AStorage, $10);
 
   if not FFailed_CONTEXT_EXTENDED_REGISTERS then begin
@@ -2130,13 +2138,14 @@ begin
     {$endif}
     DebugLn(DBG_WARNINGS and (not Result), ['Unable to get Context for ', ID, ': ', GetLastErrorText]);
   end;
-
+  {$endif cpuaarch64}
 end;
 
 function TDbgWinThread.SetFpThreadContext(ACtxPtr: PFpContext;
   ACtxFlags: TFpWinCtxFlags): Boolean;
 begin
   SetLastError(0);
+  {$ifndef cpuaarch64}
   {$ifdef cpux86_64}
   if (TDbgWinProcess(Process).FBitness = b32) then begin
     case ACtxFlags of
@@ -2164,6 +2173,7 @@ begin
   end;
   {$endif}
   DebugLn(DBG_WARNINGS and (not Result), ['Unable to set Context for ', ID, ': ', GetLastErrorText]);
+  {$endif cpuaarch64}
 end;
 
 function TDbgWinThread.GetName: String;
@@ -2250,6 +2260,7 @@ end;
 procedure TDbgWinThread.SetSingleStep;
 begin
   NextIsSingleStep := True;
+  {$ifndef cpuaarch64}
 
   if FCurrentContext = nil then
     if not ReadThreadState then
@@ -2260,6 +2271,7 @@ begin
   else
   {$endif}
     FCurrentContext^.def.EFlags := FCurrentContext^.def.EFlags or FLAG_TRACE_BIT;
+  {$endif cpuaarch64}
   FThreadContextChanged:=true;
 end;
 
@@ -2268,6 +2280,8 @@ begin
   if FCurrentContext = nil then
     if not ReadThreadState then
       exit;
+
+  {$ifndef cpuaarch64}
   {$ifdef cpux86_64}
   if (TDbgWinProcess(Process).FBitness = b32) then begin
     with FCurrentContext^.WOW do begin
@@ -2292,6 +2306,7 @@ DebugLn(DBG_VERBOSE, '### WATCH ADDED   dr0 %x  dr1 %x  dr2 %x  dr3 %x      dr7 
   {$ifdef cpux86_64}
   end;
   {$endif}
+  {$endif cpuaarch64}
   FThreadContextChanged:=true;
 end;
 
@@ -2305,6 +2320,8 @@ begin
     if not ReadThreadState then
       exit;
 
+  {$ifndef cpuaarch64}
+
   {$ifdef cpux86_64}
   if (TDbgWinProcess(Process).FBitness = b32) then begin
     Dr6 := DWORD64(FCurrentContext^.WOW.Dr6);
@@ -2315,6 +2332,8 @@ begin
   {$ifdef cpux86_64}
   end;
   {$endif}
+
+  {$endif cpuaarch64}
 
   wd := TFpIntelWatchPointData(Process.WatchPointData);
   if dr6 and 1 = 1 then result := wd.Owner[0]
@@ -2330,7 +2349,7 @@ begin
   inherited;
   if ID = MDebugEvent.dwThreadId then begin
     FHasExceptionCleared := False;
-
+    {$ifndef cpuaarch64}
     {$ifdef cpux86_64}
     if (TDbgWinProcess(Process).FBitness = b32) then begin
       if (FCurrentContext <> nil) and
@@ -2351,6 +2370,7 @@ begin
     {$ifdef cpux86_64}
     end;
     {$endif}
+    {$endif cpuaarch64}
   end;
 
   if FThreadContextChanged then
@@ -2377,6 +2397,9 @@ begin
     exit;
 
   assert(not FHasResetInstructionPointerAfterBreakpoint, 'TDbgWinThread.ResetInstructionPointerAfterBreakpoint: not FHasResetInstructionPointerAfterBreakpoint');
+
+  {$ifndef cpuaarch64}
+
   {$ifdef cpui386}
   if not CheckForHardcodeBreakPoint(FCurrentContext^.def.Eip - 1) then
     dec(FCurrentContext^.def.Eip);
@@ -2390,6 +2413,8 @@ begin
       dec(FCurrentContext^.def.Rip);
   end;
   {$endif}
+
+  {$endif cpuaarch64}
 
   FThreadContextChanged := True;
   FHasResetInstructionPointerAfterBreakpoint := True;
@@ -2432,6 +2457,8 @@ begin
   if not ReadThreadState then
     exit;
 
+  {$ifndef cpuaarch64}
+
   {$ifdef cpui386}
     assert((AValue and QWord($ffffffff00000000) = 0) or (AValue and QWord($ffffffff00000000) = QWord($ffffffff00000000)), 'TDbgWinThread.SetRegisterValue: ((AValue and QWord($ffffffff00000000) = 0) or ((AValue and QWord($ffffffff00000000) = QWord($ffffffff00000000)');
     case AName of
@@ -2467,6 +2494,7 @@ begin
     end;
   end;
   {$endif}
+  {$endif cpuaarch64}
   FThreadContextChanged:=True;
   case AName of
     'eip', 'rip': Include(FThreadContextChangeFlags, ccfControl);
@@ -2495,6 +2523,8 @@ begin
   if FCurrentContext = nil then
     if not ReadThreadState then
       exit;
+
+{$ifndef cpuaarch64}
 {$ifdef cpui386}
   Result := FCurrentContext^.def.Eip;
 {$else}
@@ -2503,6 +2533,7 @@ begin
   else
     Result := FCurrentContext^.def.Rip;
 {$endif}
+{$endif cpuaarch64}
 end;
 
 function TDbgWinThread.GetStackBasePointerRegisterValue: TDbgPtr;
@@ -2514,6 +2545,8 @@ begin
   if FCurrentContext = nil then
     if not ReadThreadState then
       exit;
+
+{$ifndef cpuaarch64}
 {$ifdef cpui386}
   Result := FCurrentContext^.def.Ebp;
 {$else}
@@ -2522,12 +2555,14 @@ begin
   else
     Result := FCurrentContext^.def.Rbp;
 {$endif}
+{$endif cpuaarch64}
 end;
 
 procedure TDbgWinThread.SetInstructionPointerRegisterValue(AValue: TDbgPtr);
 begin
   if FCurrentContext = nil then
     exit;
+{$ifndef cpuaarch64}
 {$ifdef cpui386}
   FCurrentContext^.def.Eip := AValue;
 {$else}
@@ -2536,6 +2571,7 @@ begin
   else
     FCurrentContext^.def.Rip := AValue;
 {$endif}
+{$endif cpuaarch64}
   FThreadContextChanged:=True;
 end;
 
@@ -2543,6 +2579,7 @@ procedure TDbgWinThread.SetStackPointerRegisterValue(AValue: TDbgPtr);
 begin
   if FCurrentContext = nil then
     exit;
+{$ifndef cpuaarch64}
 {$ifdef cpui386}
   FCurrentContext^.def.Esp := AValue;
 {$else}
@@ -2551,6 +2588,7 @@ begin
   else
     FCurrentContext^.def.Rsp := AValue;
 {$endif}
+{$endif cpuaarch64}
   FThreadContextChanged:=True;
 end;
 
@@ -2563,6 +2601,7 @@ begin
   if FCurrentContext = nil then
     if not ReadThreadState then
       exit;
+{$ifndef cpuaarch64}
 {$ifdef cpui386}
   Result := FCurrentContext^.def.Esp;
 {$else}
@@ -2571,6 +2610,7 @@ begin
   else
     Result := FCurrentContext^.def.Rsp;
 {$endif}
+{$endif cpuaarch64}
 end;
 
 initialization

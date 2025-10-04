@@ -1,3 +1,18 @@
+{$ifdef cpuaarch64}
+procedure AlphaBlendLineConstant(Source, Destination: Pointer; Count: Integer; ConstantAlpha, Bias: Integer);
+begin
+end;
+procedure AlphaBlendLinePerPixel(Source, Destination: Pointer; Count, Bias: Integer);
+begin
+end;
+procedure AlphaBlendLineMaster(Source, Destination: Pointer; Count: Integer; ConstantAlpha, Bias: Integer);
+begin
+end;
+procedure AlphaBlendLineMasterAndColor(Destination: Pointer; Count: Integer; ConstantAlpha, Color: Integer);
+begin
+end;
+
+{$else}
 
 {$ASMMODE INTEL}
 
@@ -530,6 +545,8 @@ asm
         JNZ     @1
 {$endif}
 end;
+
+{$endif cpuaarch64}
 
 //----------------------------------------------------------------------------------------------------------------------
 

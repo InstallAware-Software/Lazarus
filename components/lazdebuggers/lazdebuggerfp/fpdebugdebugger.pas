@@ -3382,6 +3382,8 @@ begin
     if (CurrentCommand <> nil) and (CurrentCommand.Thread <> CurrentThread) then
       exit;
     debugln(FPDBG_COMMANDS, ['@ bplRtlRestoreContext ', DbgSName(CurrentCommand)]);
+
+    {$ifndef cpuaarch64}
     // RCX = TContext
     Rcx := CurrentThread.RegisterValueList.FindRegisterByDwarfIndex(2).NumValue; // rsp at target
     if (Rcx <> 0) then begin
@@ -3391,6 +3393,7 @@ begin
       FBreakPoints[bplSehW64Unwound].AddAddress(Addr);
       FBreakPoints[bplSehW64Unwound].SetBreak;
     end;
+    {$endif cpuaarch64}
   end
   else
   // bplRtlUnwind
