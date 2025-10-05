@@ -33,6 +33,7 @@ type
           end;
     szInfoTitle: array[0..63] of WideChar;
     dwInfoFlags: DWORD;
+    guidItem : GUID;
   end;
 
 const
