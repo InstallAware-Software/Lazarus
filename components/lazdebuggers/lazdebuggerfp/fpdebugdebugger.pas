@@ -3578,7 +3578,21 @@ end;
 
 procedure TFpDebugDebugger.FDbgControllerExceptionEvent(var continue: boolean;
   const ExceptionClass, ExceptionMessage: string);
+var
+  ExceptItem: TBaseException;
 begin
+  if Exceptions.IgnoreAll then begin
+    continue := True;
+    exit;
+  end;
+
+  ExceptItem := Exceptions.Find(ExceptionClass);
+  if (ExceptItem <> nil) and (ExceptItem.Enabled)
+  then begin
+    continue := True;
+    exit;
+  end;
+
   DoException(deExternal, ExceptionClass, GetLocation, ExceptionMessage, continue);
   if not continue then
     begin
@@ -3804,6 +3818,11 @@ begin
     ExceptionClass := GetClassInstanceName(AnExceptionObjectLocation);
   end;
 
+  if Exceptions.IgnoreAll then begin
+    continue := True;
+    exit;
+  end;
+
   ExceptItem := Exceptions.Find(ExceptionClass);
   if (ExceptItem <> nil) and (ExceptItem.Enabled)
   then begin
@@ -3846,6 +3865,11 @@ begin
     ErrNo := 0;
   end;
 
+  if Exceptions.IgnoreAll then begin
+    continue := True;
+    exit;
+  end;
+
   ExceptItem := Exceptions.Find(ExceptName);
   if (ExceptItem <> nil) and (ExceptItem.Enabled)
   then begin
@@ -3882,6 +3906,11 @@ begin
   else begin
     ExceptName := 'RunError(unknown)';
     ErrNo := 0;
+  end;
+
+  if Exceptions.IgnoreAll then begin
+    continue := True;
+    exit;
   end;
 
   ExceptItem := Exceptions.Find(ExceptName);
